@@ -215,20 +215,57 @@
         return 'ParaDeeJay: loading voice\u2026';
     }
 
-    function openSettings() {
-        var list = app.getAddonList('all');
-        list.whenLoaded().then(function () {
-            var addon = null;
-            for (var i = 0; i < list.count; i++) {
-                var item = list.getValue(i);
-                if (item && item.ext_id === 'paraDeeJay') { addon = item; break; }
+    // MediaMonkey's addon list is a native list. Reading it with getValue()
+    // outside a read lock throws "Read lock not acquired!": the loop has to run
+    // inside locked() (see controls/artworklist.js in MediaMonkey), which is
+    // what forEach() does for us when it is available.
+    function scanForOwnAddon(list) {
+        var addon = null;
+        var check = function (item) {
+            if (!addon && item && String(item.ext_id).toLowerCase() === 'paradeejay') addon = item;
+        };
+
+        try {
+            if (typeof list.forEach === 'function') {
+                list.forEach(check);
+            } else {
+                list.locked(function () {
+                    for (var i = 0; i < list.count; i++) check(list.getValue(i));
+                });
             }
-            if (!addon) {
+        } catch (e) {
+            console.error('ParaDeeJay: could not read the addon list', e);
+        }
+        return addon;
+    }
+
+    function openSettings() {
+        // The filtered list is the one the bundled customNodes sample uses; the
+        // unfiltered list is the fallback if that filter ever stops matching.
+        var filters = [['all', 'all', 'justInstalled'], ['all']];
+
+        function tryList(index) {
+            if (index >= filters.length) {
                 toast('ParaDeeJay: could not find the addon entry.');
                 return;
             }
-            uitools.openDialog('dlgAddonConfig', { modal: true, addon: addon });
-        });
+
+            var list = null;
+            try {
+                list = app.getAddonList.apply(app, filters[index]);
+            } catch (e) {
+                console.error('ParaDeeJay: could not read the addon list', e);
+            }
+            if (!list) { tryList(index + 1); return; }
+
+            list.whenLoaded().then(function () {
+                var addon = scanForOwnAddon(list);
+                if (addon) uitools.openDialog('dlgAddonConfig', { modal: true, addon: addon });
+                else tryList(index + 1);
+            });
+        }
+
+        tryList(0);
     }
 
     async function diagnostics() {
