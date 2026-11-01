@@ -4,12 +4,13 @@
 
 [![Latest release](https://img.shields.io/github/v/release/djnizzi/ParaDeeJay?label=version&color=2f81f7)](https://github.com/djnizzi/ParaDeeJay/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/djnizzi/ParaDeeJay/total?label=downloads&color=2f81f7)](https://github.com/djnizzi/ParaDeeJay/releases)
-![MediaMonkey 5.0+](https://img.shields.io/badge/MediaMonkey-5.0%2B-ffb400)
+![MediaMonkey5 2024.x](https://img.shields.io/badge/MediaMonkey-5.0%2B-ffb400)
 ![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078d6)
 ![Runs fully offline](https://img.shields.io/badge/runs-100%25%20offline-3fb950)
 ![8.5 MB int8 model](https://img.shields.io/badge/model-8.5%20MB%20int8-8957e5)
 ![Four voices](https://img.shields.io/badge/voices-4-8957e5)
 ![Paradee Apache-2.0](https://img.shields.io/badge/Paradee-Apache--2.0-blue)
+![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue)
 
 A MediaMonkey 5 addon that announces the playing track in a **local neural voice**.
 No cloud, no API key, no installed Windows voice: it runs [Paradee], an 8M-parameter
@@ -109,8 +110,13 @@ To repair manually, set `assetBaseOverride` in `persistent.json` under
 
 ## Licences
 
+ParaDeeJay itself is MIT licensed, (c) 2026 NiZDesign — see [LICENSE](LICENSE).
+That covers the addon's code and settings page. Everything it bundles keeps its
+own licence:
+
 - Paradee model and the misaki phoneme table: Apache 2.0, (c) Sahil Mahendrakar,
-  distilled from Kokoro-82M by hexgrad. See `vendor/paradee_LICENSE.txt`.
+  distilled from Kokoro-82M by hexgrad. The full text ships in the package as
+  `vendor/paradee_LICENSE.txt`.
 - onnxruntime-web: MIT, (c) Microsoft.
 - CMU Pronouncing Dictionary: BSD-2-clause, (c) Carnegie Mellon University.
 - Kokoro vocabulary: Apache 2.0.

@@ -11,6 +11,8 @@
   open if MediaMonkey changes how the list is filtered.
 - README: the artwork and version, download, platform, offline, model, voice and
   licence badges, written as markdown rather than HTML.
+- The addon is now explicitly MIT licensed (`LICENSE`), and that file ships in
+  the package.
 
 ## 0.1.0
 
