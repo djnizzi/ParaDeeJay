@@ -3,3 +3,6 @@ build/
 *.mmip
 node_modules/
 tools/cmudict.dict
+
+# Artwork sources stay local; only the flattened PNG ships.
+*.psd
