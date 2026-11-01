@@ -1,0 +1,75 @@
+<div class="uiRows">
+    <fieldset>
+        <legend>ParaDeeJay</legend>
+
+        <div>
+            <div data-id="chbEnabled" data-control-class="Checkbox"
+                 data-tip="Master switch. Also available as a toolbar button and with Ctrl+Shift+9.">
+                Announce the playing track
+            </div>
+        </div>
+
+        <div>
+            <div data-id="chbShowToolbar" data-control-class="Checkbox"
+                 data-tip="Show the ParaDeeJay on/off button in the right toolbar.">
+                Show the on/off button in the toolbar
+            </div>
+        </div>
+
+        <div>
+            <div data-id="chbFallback" data-control-class="Checkbox"
+                 data-tip="If the local model cannot load, read the announcement with the Windows voice instead of staying silent.">
+                Fall back to the system voice if the local voice fails
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Voice</legend>
+
+        <div>
+            <label data-add-colon>Voice</label>
+            <div data-id="cbVoice" data-control-class="Dropdown"
+                 data-init-params="{readOnly: true, preload: true}"></div>
+        </div>
+
+        <div>
+            <label data-add-colon>Speed</label>
+            <div class="flex row">
+                <div data-id="slSpeed" class="fill" data-control-class="Slider"
+                     data-init-params="{min: 50, max: 200, step: 10, wheelStep: 10, value: 100}"></div>
+                <span data-id="lblSpeed" style="min-width: 4em; text-align: right;"></span>
+            </div>
+        </div>
+
+        <div>
+            <label data-add-colon>Volume</label>
+            <div class="flex row">
+                <div data-id="slVolume" class="fill" data-control-class="Slider"
+                     data-init-params="{min: 0, max: 100, step: 5, wheelStep: 5, value: 80}"></div>
+                <span data-id="lblVolume" style="min-width: 4em; text-align: right;"></span>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Test</legend>
+
+        <div>
+            <div class="flex row">
+                <div data-id="btnTest" data-control-class="Button"
+                     data-tip="Speak a sample with the voice, speed and volume chosen above.">
+                    Test voice
+                </div>
+                <div data-id="btnDiagnostics" data-control-class="Button"
+                     data-tip="Check that the addon can find its model and that this Chromium can run it.">
+                    Self-test
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <span data-id="lblStatus">The voice loads the first time a track plays.</span>
+        </div>
+    </fieldset>
+</div>

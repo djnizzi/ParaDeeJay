@@ -1,0 +1,12 @@
+{
+  "title": "ParaDeeJay",
+  "id": "paraDeeJay",
+  "version": "0.1.0",
+  "type": "general",
+  "description": "Announces the playing track in a local neural voice. Runs Paradee, an 8M-parameter TTS model distilled from Kokoro, entirely inside MediaMonkey. No cloud, no API key, four voices.",
+  "author": "MicroRave NZ: www.microrave.nz",
+  "icon": "icon.png",
+  "config": "config.js",
+  "installScript": "install.js",
+  "minAppVersion": "5.0.0"
+}
