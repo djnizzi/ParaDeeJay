@@ -16,7 +16,9 @@ If both are enabled they will both speak, so turn off speech in the one you are 
 
 1. Build the package (below) or take `ParaDeeJay.mmip` from a release.
 2. MediaMonkey: **Tools > Addons > Add**, choose the `.mmip`, restart.
-3. Options: **Tools > Addons > ParaDeeJay > Configure**.
+3. Options: **Tools > Addons > ParaDeeJay > Configure** — choose one of the four
+   voices, set speed and volume, and press **Test voice** to hear the voice you
+   picked before closing the dialog.
 
 Hotkeys: `Ctrl+Shift+9` toggles announcements, `Ctrl+Shift+8` announces the current
 track immediately. Both are also in **Tools > ParaDeeJay** and on the toolbar button.

@@ -27,9 +27,9 @@ if (fs.existsSync(iconPath)) {
   const alpha = png[25] === 4 || png[25] === 6 || png[28] !== 0;
   console.log('icon: ' + w + 'x' + h + ', ' + Math.round(png.length / 1024) + ' KB' +
     (alpha ? '' : ' (no alpha channel)'));
-  if (w > 512 || h > 512) {
-    console.log('icon: MediaMonkey shows this small - 256x256 keeps ' +
-      Math.round((png.length / 1048576) * 10) / 10 + ' MB out of the package');
+  if (w > 640 || h > 640 || png.length > 250 * 1024) {
+    console.log('icon: bigger than an addon icon needs to be - MediaMonkey renders it ' +
+      'small, so 640x640 under 250 KB is plenty');
   }
 }
 
