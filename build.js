@@ -45,6 +45,7 @@ const entries = [
   'g2p.js',
   'engine.js',
   'README.md',
+  'skin',
   'vendor'
 ];
 

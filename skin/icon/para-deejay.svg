@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="100%" height="100%">
+	<!-- Parrot head. The "textColor" class makes the skin colour it, exactly as
+	     MediaMonkey's own icons and Track Announcer's do. -->
+	<path class="textColor" fill-rule="evenodd" d="M10.5 2.5a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm1.3 3.7a1.9 1.9 0 1 1 0 3.8 1.9 1.9 0 0 1 0-3.8z"/>
+	<path class="textColor" d="M18.2 7.2 22.6 9.4 18.2 11.6z"/>
+	<path class="textColor" d="M6.4 16.9c1.6 2.6 4.2 4.1 7.1 4.1-2.9-1-5.1-2.4-6.2-4.3z"/>
+</svg>
