@@ -4,14 +4,11 @@
 // the main window at startup. init.js owns the toolbar button and the playback
 // listener; everything both files need lives on window.ParaDeeJay.
 
-// The addon's own modules live next to this file. localRequirejs evaluates them
-// in the main window; they must be loaded before requirejs() is called so that
-// __scriptName still points at this addon.
-if (typeof localRequirejs === 'function') {
-    localRequirejs('platform');
-    localRequirejs('g2p');
-    localRequirejs('engine');
-}
+// The addon's own modules live next to this file and are loaded by init.js.
+// Do not use localRequirejs here: MediaMonkey concatenates this file into its own
+// `actions` module, where that helper's __scriptName variable is not in scope and
+// calling it throws. Everything below reaches the runtime lazily through
+// window.ParaDeeJay, so the modules only have to exist by the time a track plays.
 
 (function () {
     'use strict';
