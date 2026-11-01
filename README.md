@@ -28,6 +28,12 @@ node tools/build-lexicon.js   # only when changing the G2P; needs tools/cmudict.
 node build.js                 # -> ParaDeeJay.mmip
 ```
 
+The addon icon is drawn as `paradeejay.png` and `build.js` copies it over
+`icon.png` (the file `info.json` names) whenever it is newer, so re-saving the
+artwork and re-running the build is enough. 256x256 with an alpha channel is the
+sweet spot: MediaMonkey renders it small, and a 2048px export adds megabytes for
+nothing.
+
 `node tools/build-lexicon.js` downloads nothing: fetch `cmudict.dict` from
 <https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict> into
 `tools/` first. `build.js` shells out to PowerShell's `Compress-Archive` on Windows

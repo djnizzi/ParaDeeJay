@@ -10,6 +10,29 @@ const zlib = require('zlib');
 const root = __dirname;
 const outPath = path.join(root, 'ParaDeeJay.mmip');
 
+// The artwork is authored as paradeejay.png; info.json points at icon.png, so
+// re-saving the artwork and re-running the build is the whole workflow.
+const artPath = path.join(root, 'paradeejay.png');
+const iconPath = path.join(root, 'icon.png');
+if (fs.existsSync(artPath) &&
+    (!fs.existsSync(iconPath) || fs.statSync(artPath).mtimeMs > fs.statSync(iconPath).mtimeMs)) {
+  fs.copyFileSync(artPath, iconPath);
+  console.log('icon: copied paradeejay.png -> icon.png');
+}
+
+if (fs.existsSync(iconPath)) {
+  const png = fs.readFileSync(iconPath);
+  const w = png.readUInt32BE(16);
+  const h = png.readUInt32BE(20);
+  const alpha = png[25] === 4 || png[25] === 6 || png[28] !== 0;
+  console.log('icon: ' + w + 'x' + h + ', ' + Math.round(png.length / 1024) + ' KB' +
+    (alpha ? '' : ' (no alpha channel)'));
+  if (w > 512 || h > 512) {
+    console.log('icon: MediaMonkey shows this small - 256x256 keeps ' +
+      Math.round((png.length / 1048576) * 10) / 10 + ' MB out of the package');
+  }
+}
+
 const entries = [
   'info.json',
   'install.js',
