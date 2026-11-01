@@ -32,14 +32,21 @@ node build.js                 # -> ParaDeeJay.mmip
 
 The addon icon is drawn as `paradeejay.png` and `build.js` copies it over
 `icon.png` (the file `info.json` names) whenever it is newer, so re-saving the
-artwork and re-running the build is enough. 256x256 with an alpha channel is the
-sweet spot: MediaMonkey renders it small, and a 2048px export adds megabytes for
-nothing.
+artwork and re-running the build is enough. 640x640 is the size the build warns
+about; the shipped artwork is 574x574 with alpha at 241 KB, already more than
+MediaMonkey needs.
+
+The small toolbar and menu glyph is a separate file, `skin/icon/para-deejay.svg`.
+MediaMonkey resolves every `icon:` name in the addon to `skin/icon/<name>.svg` and
+asserts at startup when it is missing, so changing the addon id or an action's icon
+means shipping a matching file there. It uses `class="textColor"` instead of a
+fixed fill so the skin colours the glyph.
 
 `node tools/build-lexicon.js` downloads nothing: fetch `cmudict.dict` from
 <https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict> into
-`tools/` first. `build.js` shells out to PowerShell's `Compress-Archive` on Windows
-and `zip` elsewhere.
+`tools/` first. `build.js` writes the zip itself: PowerShell's `Compress-Archive`
+stores backslash entry names, which MediaMonkey extracts as literal `vendor\file`
+names instead of a folder.
 
 ## How it works
 
