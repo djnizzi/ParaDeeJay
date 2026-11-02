@@ -37,9 +37,10 @@ track immediately. Both are also in **Tools > ParaDeeJay** and on the toolbar bu
 
 ## Settings
 
-The toolbar button and `Ctrl+Shift+9` switch announcements on and off; the toast
-that follows (`ParaDeeJay: ON` / `OFF`) confirms the new state, and the addon stays
-silent while it is off, including after a MediaMonkey restart. Voice, speed and
+The toolbar button and `Ctrl+Shift+9` switch announcements on and off; the button
+dims while they are off, the toast that follows (`ParaDeeJay: ON` / `OFF`) confirms
+the change, and the addon stays silent while it is off, including after a
+MediaMonkey restart. Voice, speed and
 volume apply to the next announcement, so press **Test voice** to hear them without
 waiting for a track change.
 
