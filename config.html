@@ -1,3 +1,26 @@
+<style>
+    .pdj-name-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+        margin: 0.25em 0;
+    }
+
+    .pdj-name-input {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .pdj-name-remove {
+        flex: 0 0 auto;
+        width: 2em;
+    }
+
+    .pdj-name-hint {
+        opacity: 0.75;
+    }
+</style>
+
 <div class="uiRows">
     <fieldset>
         <legend>ParaDeeJay</legend>
@@ -48,6 +71,23 @@
                 <div data-id="slVolume" class="fill" data-control-class="Slider"
                      data-init-params="{min: 0, max: 100, step: 5, wheelStep: 5, value: 80}"></div>
                 <span data-id="lblVolume" style="min-width: 4em; text-align: right;"></span>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Names</legend>
+
+        <div>
+            <span class="pdj-name-hint">Fix a name the voice gets wrong: left is how it is written, right is how it should be said.</span>
+        </div>
+
+        <div id="pdjDictRows"></div>
+
+        <div>
+            <div data-id="btnAddName" data-control-class="Button"
+                 data-tip="Add another name to the pronunciation dictionary.">
+                Add name
             </div>
         </div>
     </fieldset>

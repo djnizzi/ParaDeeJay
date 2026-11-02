@@ -192,6 +192,12 @@
         var g2p = global.ParaDeeJayG2P;
         if (!g2p) throw new Error('the G2P module is not loaded');
 
+        // Names from the settings dialog take precedence over the built-in table.
+        // Only reapplied when the caller passes them, so a call that does not care
+        // about the dictionary cannot clear it.
+        var dict = global.ParaDeeJayDictionary;
+        if (dict && dict.setUser && opts.dictionary !== undefined) dict.setUser(opts.dictionary);
+
         var myToken = ++token;
         await ensureRuntime();
         if (myToken !== token) return null; // superseded while the model was loading

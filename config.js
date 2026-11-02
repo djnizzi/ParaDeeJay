@@ -21,6 +21,7 @@
         volume: 0.8,
         fallbackToSystemTts: true,
         showToolbarButton: true,
+        dictionary: [],
         assetBaseOverride: ''
     };
 
@@ -91,21 +92,99 @@
         s.voice = clamp(s.voice, 0, VOICES.length - 1) | 0;
         s.speed = clamp(s.speed, 0.5, 2);
         s.volume = clamp(s.volume, 0, 1);
+        if (!Array.isArray(s.dictionary)) s.dictionary = [];
         return s;
+    }
+
+    // --------------------------------------------------------------- names
+    //
+    // Two-column editor for the pronunciation dictionary. MediaMonkey's config
+    // controls are all single-line (Edit builds an <input>), so these rows are
+    // plain DOM, styled by the rules in config.html.
+
+    var MAX_ENTRIES = 200;
+
+    function dictBox(panel) {
+        try { return panel.querySelector('#pdjDictRows'); } catch (e) { return null; }
+    }
+
+    function addRow(box, from, to) {
+        var row = document.createElement('div');
+        row.className = 'pdj-name-row';
+
+        var written = document.createElement('input');
+        written.type = 'text';
+        written.className = 'pdj-name-input';
+        written.placeholder = 'as written, e.g. R\u00dcF\u00dcS';
+        written.value = from || '';
+
+        var spoken = document.createElement('input');
+        spoken.type = 'text';
+        spoken.className = 'pdj-name-input';
+        spoken.placeholder = 'as it should sound, e.g. Rufus doo sol';
+        spoken.value = to || '';
+
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'pdj-name-remove';
+        remove.title = 'Remove this name';
+        remove.textContent = '\u00d7';
+        remove.addEventListener('click', function () {
+            if (row.parentNode) row.parentNode.removeChild(row);
+        });
+
+        row.appendChild(written);
+        row.appendChild(spoken);
+        row.appendChild(remove);
+        box.appendChild(row);
+        return row;
+    }
+
+    function renderRows(panel, entries) {
+        var box = dictBox(panel);
+        if (!box) return;
+        box.innerHTML = '';
+        var list = Array.isArray(entries) ? entries : [];
+        for (var i = 0; i < list.length && i < MAX_ENTRIES; i++) {
+            var item = list[i] || {};
+            var from = item.from !== undefined ? item.from : item[0];
+            var to = item.to !== undefined ? item.to : item[1];
+            if (!from && !to) continue;
+            addRow(box, from, to);
+        }
+    }
+
+    // Half-filled rows are dropped rather than saved, so a stray keystroke in the
+    // Add row does not leave a rule that can never match.
+    function readRows(panel) {
+        var box = dictBox(panel);
+        var out = [];
+        if (!box) return out;
+        var rows = box.querySelectorAll('.pdj-name-row');
+        for (var i = 0; i < rows.length && out.length < MAX_ENTRIES; i++) {
+            var inputs = rows[i].querySelectorAll('.pdj-name-input');
+            if (inputs.length < 2) continue;
+            var from = String(inputs[0].value || '').trim();
+            var to = String(inputs[1].value || '').trim();
+            if (!from || !to) continue;
+            out.push({ from: from.slice(0, 80), to: to.slice(0, 120) });
+        }
+        return out;
     }
 
     function mainWindow() {
         try { return app.dialogs.getMainWindow(); } catch (e) { return null; }
     }
 
-    function collect(UI) {
+    function collect(UI, panel) {
         return {
             enabled: !!UI.chbEnabled.controlClass.checked,
             showToolbarButton: !!UI.chbShowToolbar.controlClass.checked,
             fallbackToSystemTts: !!UI.chbFallback.controlClass.checked,
             voice: clamp(UI.cbVoice.controlClass.focusedIndex, 0, VOICES.length - 1) | 0,
             speed: clamp(UI.slSpeed.controlClass.value / 100, 0.5, 2),
-            volume: clamp(UI.slVolume.controlClass.value / 100, 0, 1)
+            volume: clamp(UI.slVolume.controlClass.value / 100, 0, 1),
+            dictionary: readRows(panel)
         };
     }
 
@@ -183,8 +262,18 @@
             window.localListen(UI.slSpeed, 'livechange', function () { updateLabels(UI); });
             window.localListen(UI.slVolume, 'livechange', function () { updateLabels(UI); });
 
+            renderRows(panel, s.dictionary);
+
+            window.localListen(UI.btnAddName, 'click', function () {
+                var box = dictBox(panel);
+                if (!box) return;
+                var row = addRow(box, '', '');
+                var input = row.querySelector('.pdj-name-input');
+                if (input) input.focus();
+            });
+
             window.localListen(UI.btnTest, 'click', function () {
-                callInMainWindow('ParaDeeJayTest', collect(UI));
+                callInMainWindow('ParaDeeJayTest', collect(UI, panel));
             });
 
             window.localListen(UI.btnDiagnostics, 'click', function () {
@@ -204,7 +293,7 @@
             // the dialog does not show (assetBaseOverride) survive a save.
             var previous = readBoth() || {};
             var settings = clone(previous);
-            var collected = collect(UI);
+            var collected = collect(UI, panel);
             for (var k in collected) {
                 if (Object.prototype.hasOwnProperty.call(collected, k) && collected[k] !== undefined) {
                     settings[k] = collected[k];

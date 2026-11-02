@@ -67,6 +67,40 @@
         ['asap', 'ay sap']                // A$AP, not the letter-spelled lexicon entry
     ];
 
+    // Entries the user adds in the settings dialog. They are matched before the
+    // built-ins, so a user entry always wins, and they live in the settings rather
+    // than in this file, so an add-on update cannot throw them away.
+    var MAX_ENTRIES = 300;
+    var MAX_TO = 120;
+    var user = [];
+
+    // Accepts [{from, to}, ...] or [['from', 'to'], ...]; anything unusable is
+    // dropped rather than throwing, because the source is a text field.
+    function setUser(entries) {
+        var list = [];
+        if (entries && typeof entries.length === 'number') {
+            for (var i = 0; i < entries.length && list.length < MAX_ENTRIES; i++) {
+                var item = entries[i] || {};
+                var from = String(item.from != null ? item.from : (item[0] != null ? item[0] : ''));
+                var to = String(item.to != null ? item.to : (item[1] != null ? item[1] : ''));
+                // The left side is matched against folded text, so it is folded
+                // too: the user can type RÜFÜS and it still matches RUFUS.
+                from = fold(from).toLowerCase().replace(/\s+/g, ' ').trim();
+                to = fold(to).replace(/\s+/g, ' ').trim();
+                if (!from || !to) continue;
+                list.push([from, to.slice(0, MAX_TO)]);
+            }
+        }
+
+        // Longest first, so "rufus du sol" beats "rufus"; a duplicate from-side
+        // keeps the entry that sorts first in the settings, which is the newest.
+        list.sort(function (a, b) { return b[0].length - a[0].length; });
+        user = list.map(function (pair) {
+            return [pair[0], pair[1], new RegExp('\\b' + escapeRe(pair[0]) + '\\b', 'gi')];
+        });
+        return user.length;
+    }
+
     function fold(text) {
         var s = String(text == null ? '' : text);
         try {
@@ -106,12 +140,16 @@
 
     // Text in, text the tokenizer can handle out.
     function prepare(text) {
-        return applyPhrases(fold(text)).replace(/\s+/g, ' ').replace(/^ | $/g, '');
+        var s = fold(text);
+        for (var i = 0; i < user.length; i++) s = s.replace(user[i][2], user[i][1]);
+        return applyPhrases(s).replace(/\s+/g, ' ').replace(/^ | $/g, '');
     }
 
     global.ParaDeeJayDictionary = {
         fold: fold,
         prepare: prepare,
+        setUser: setUser,
+        userCount: function () { return user.length; },
         CHARS: CHARS,
         PHRASES: PHRASES
     };

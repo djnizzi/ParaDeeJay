@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.4
+
+- The settings dialog gained a **Names** list: two columns per row, "as written"
+  and "as it should sound", with **Add name** and a remove button on each row.
+  Entries are saved with the other settings, so they survive add-on updates —
+  they are not written into `dictionary.js`, which the package replaces — and
+  they are matched before the built-in table, so a user entry always wins.
+  The left column is folded the same way as track text, so `RÜFÜS` and `RUFUS`
+  are the same entry; matching ignores case, respects word boundaries and tries
+  the longest entry first.
+- Empty and half-filled rows are dropped on save instead of being stored as
+  rules that can never match. The list is capped at 200 rows in the dialog and
+  300 in the matcher, 80 characters for the written form and 120 for the
+  respelling.
+
 ## 0.1.3
 
 - **Fixed: names with accented letters were spelled out letter by letter.**

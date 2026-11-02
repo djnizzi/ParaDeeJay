@@ -22,6 +22,7 @@
         volume: 0.8,              // 0 .. 1
         fallbackToSystemTts: true, // speak with the OS voice if the model cannot load
         showToolbarButton: true,
+        dictionary: [],           // [{ from, to }] names added in the settings dialog
         assetBaseOverride: ''     // where the addon's files live, if auto-detection fails
     };
 
@@ -107,6 +108,7 @@
         s.voice = Math.min(3, Math.max(0, Number(s.voice) | 0));
         s.speed = clamp(s.speed, 0.5, 2);
         s.volume = clamp(s.volume, 0, 1);
+        if (!Array.isArray(s.dictionary)) s.dictionary = [];
         return s;
     }
 
@@ -176,7 +178,7 @@
         var e = engine();
         if (!e) return;
         try {
-            var stats = await e.speak(text, { voice: s.voice, speed: s.speed, volume: s.volume });
+            var stats = await e.speak(text, { voice: s.voice, speed: s.speed, volume: s.volume, dictionary: s.dictionary });
             if (stats && stats.inferMs) {
                 // Keep a quiet record of the last utterance for the settings dialog.
                 lastUtterance = stats;

@@ -120,19 +120,34 @@ Names that survive folding but are still mispronounced are respelled by a plain
 ['beyonce', 'bee yon say'],
 ```
 
-Add an entry for any artist the voice gets wrong. It is plain data, and the
-lexicon is untouched: the respelling is fed back through the ordinary word
-lookup, so it only works if it is spelled the way you want it said.
+The easiest place to add a name is the **Names** list in the settings dialog
+(**Tools > Addons > ParaDeeJay > Configure**): one row per name, how it is
+written on the left and how it should sound on the right, **Add name** for
+another row, `×` to drop one.
 
-The table ships inside the package, so the copy to edit is the installed one:
+```
+RÜFÜS            Rufus
+RÜFÜS DU SOL     Rufus doo sol
+Sigur Rós        Sigur ross
+```
+
+These entries live with the other settings rather than in `dictionary.js`, so an
+add-on update cannot throw them away, and they are matched before the built-in
+table — a dialog entry always wins. The left column is folded like track text, so
+`RÜFÜS` and `RUFUS` are the same entry, matching ignores case, respects word
+boundaries and tries the longest entry first. Empty and half-filled rows are
+dropped on save. The respelling is fed back through the ordinary word lookup, so
+it only works if it is spelled the way you want it said.
+
+For a bulk import, the installed table can also be edited directly:
 
 ```
 %APPDATA%\MediaMonkey5\scripts\paraDeeJay\dictionary.js
 ```
 
-Restart MediaMonkey and the next announcement uses it — no rebuild, no lexicon
-regeneration. Editing the copy in this repository instead means running
-`node build.js` and reinstalling the `.mmip`.
+Restart MediaMonkey and the next announcement uses it. Editing the copy in this
+repository instead means running `node build.js` and reinstalling the `.mmip`,
+because the built-in table ships inside the package.
 
 Nothing loads at startup: the first announcement resolves paths, fetches the
 runtime and builds the session (~1.5 s), then the session stays warm. `init.js`
