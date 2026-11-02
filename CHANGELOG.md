@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.5
+
+- **Export CSV…** beside **Add name** in the settings dialog writes the Names
+  list to `ParaDeeJay names.csv` in MediaMonkey's user folder, and reports the
+  full path when it finishes. MediaMonkey offers add-ons no save-as dialog, so
+  the folder is fixed rather than asked for.
+- The file is UTF-8 with a byte-order mark, CRLF line ends and RFC 4180 quoting,
+  so Excel opens `RÜFÜS,Rufus` as two cells instead of mojibake, and a name with
+  a comma or a quote in it stays in one cell.
+- It exports what is on screen, so rows you added but have not saved are
+  included; empty and half-filled rows are skipped, exactly as when saving.
+
 ## 0.1.4
 
 - The settings dialog gained a **Names** list: two columns per row, "as written"

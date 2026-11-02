@@ -396,6 +396,65 @@
         speakText('Paradee is a small voice that runs anywhere. This is how track announcements will sound.', s);
     };
 
+    // Export button in the settings dialog. The CSV is built here rather than in
+    // the dialog because dictionary.js is loaded in this window, and the writing
+    // primitive is MediaMonkey's own app.filesystem.saveTextToFileAsync.
+    var EXPORT_FILE = 'ParaDeeJay names.csv';
+
+    // MediaMonkey has no save-as dialog for addons, so the file goes to the first
+    // folder the host will name: the user folder, then the data folder. The
+    // caller reports the resulting path, so it is never a mystery where it went.
+    function exportFolder() {
+        var fs = app.filesystem;
+        var names = ['getUserFolder', 'getDataFolder'];
+        for (var i = 0; i < names.length; i++) {
+            try {
+                if (typeof fs[names[i]] === 'function') {
+                    var path = fs[names[i]]();
+                    if (path) return String(path);
+                }
+            } catch (e) { /* try the next one */ }
+        }
+        return '';
+    }
+
+    window.ParaDeeJayExportNames = function (rows) {
+        var dict = window.ParaDeeJayDictionary;
+        if (!dict || typeof dict.toCsv !== 'function') {
+            toast('ParaDeeJay: the dictionary module is not loaded.');
+            return;
+        }
+
+        var list = Array.isArray(rows) ? rows : readSettings().dictionary;
+        var csv = dict.toCsv(list);
+        // Header is line 1 and the trailing CRLF makes an empty last entry.
+        var count = Math.max(0, csv.split('\r\n').length - 2);
+        if (!count) {
+            toast('ParaDeeJay: there are no names to export yet.');
+            return;
+        }
+
+        var folder = exportFolder();
+        if (!folder) {
+            toast('ParaDeeJay: could not find a folder to write the CSV to.');
+            return;
+        }
+
+        var sep = '/';
+        try { sep = app.filesystem.getPathSeparator() || sep; } catch (e) { }
+        var file = folder.replace(/[\\\/]+$/, '') + sep + EXPORT_FILE;
+
+        try {
+            app.filesystem.saveTextToFileAsync(file, csv).then(function () {
+                toast('ParaDeeJay: exported ' + count + (count === 1 ? ' name' : ' names') + ' to ' + file);
+            }, function (err) {
+                toast('ParaDeeJay: could not write ' + file + ' (' + (err && err.message || err) + ')');
+            });
+        } catch (e) {
+            toast('ParaDeeJay: could not write ' + file + ' (' + (e && e.message || e) + ')');
+        }
+    };
+
     window.ParaDeeJayLastUtterance = function () { return lastUtterance; };
     window.ParaDeeJayStatus = function () { return statusText(); };
 

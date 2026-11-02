@@ -139,6 +139,13 @@ boundaries and tries the longest entry first. Empty and half-filled rows are
 dropped on save. The respelling is fed back through the ordinary word lookup, so
 it only works if it is spelled the way you want it said.
 
+**Export CSV…** writes those rows to `ParaDeeJay names.csv` in MediaMonkey's user
+folder, and the message that follows names the full path. The file is UTF-8 with
+a byte-order mark, CRLF line ends and CSV quoting, so Excel shows `RÜFÜS` and
+`Rufus` as two cells with the accents intact. It exports what is on screen, so
+rows you have added but not saved are included. MediaMonkey gives add-ons no
+save-as dialog, which is why the destination is fixed rather than chosen.
+
 For a bulk import, the installed table can also be edited directly:
 
 ```

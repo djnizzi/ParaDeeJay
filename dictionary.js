@@ -145,8 +145,34 @@
         return applyPhrases(s).replace(/\s+/g, ' ').replace(/^ | $/g, '');
     }
 
+    // ---------------------------------------------------------------- export
+    //
+    // The settings dialog hands the list to toCsv. Excel and Sheets only decode
+    // UTF-8 when the file starts with a BOM, RFC 4180 wants CRLF line ends and
+    // doubled quotes, and the blank-half rule that saving uses applies here too,
+    // so the file opens cleanly and can be read back line for line.
+
+    function csvCell(value) {
+        var s = String(value == null ? '' : value);
+        return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function toCsv(entries) {
+        var rows = ['As written,As it should sound'];
+        var list = Array.isArray(entries) ? entries : [];
+        for (var i = 0; i < list.length && rows.length <= MAX_ENTRIES; i++) {
+            var item = list[i] || {};
+            var from = String(item.from != null ? item.from : (item[0] != null ? item[0] : '')).trim();
+            var to = String(item.to != null ? item.to : (item[1] != null ? item[1] : '')).trim();
+            if (!from || !to) continue;
+            rows.push(csvCell(from) + ',' + csvCell(to));
+        }
+        return '\uFEFF' + rows.join('\r\n') + '\r\n';
+    }
+
     global.ParaDeeJayDictionary = {
         fold: fold,
+        toCsv: toCsv,
         prepare: prepare,
         setUser: setUser,
         userCount: function () { return user.length; },

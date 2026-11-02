@@ -272,6 +272,12 @@
                 if (input) input.focus();
             });
 
+            // The CSV is built in the main window, where dictionary.js is loaded;
+            // the rows are taken from the panel so unsaved edits are included.
+            window.localListen(UI.btnExportNames, 'click', function () {
+                callInMainWindow('ParaDeeJayExportNames', readRows(panel));
+            });
+
             window.localListen(UI.btnTest, 'click', function () {
                 callInMainWindow('ParaDeeJayTest', collect(UI, panel));
             });
