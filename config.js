@@ -264,6 +264,15 @@
         }
     }
 
+    // MediaMonkey's own options panels disable a dependent control through
+    // controlClass.disabled (see pnl_playlists.js), so the level slider follows
+    // the switch and it is obvious which one governs the other.
+    function updateDuckState(UI) {
+        if (UI.slDuck) {
+            UI.slDuck.controlClass.disabled = !UI.chbDuck.controlClass.checked;
+        }
+    }
+
     // MediaMonkey windows are reached through getValue() in the samples, but
     // that is really its settings lookup; try the plain property too so the
     // hand-off survives either way.
@@ -322,6 +331,7 @@
             UI.chbFallback.controlClass.checked = !!s.fallbackToSystemTts;
             UI.chbDuck.controlClass.checked = s.duckMusic !== false;
             UI.slDuck.controlClass.value = Math.round(clamp(s.duckTo, 0, 1) * 100);
+            updateDuckState(UI);
 
             var ds = newStringList(true);
             for (var i = 0; i < VOICES.length; i++) ds.add(VOICES[i]);
@@ -335,6 +345,7 @@
             window.localListen(UI.slSpeed, 'livechange', function () { updateLabels(UI); });
             window.localListen(UI.slVolume, 'livechange', function () { updateLabels(UI); });
             window.localListen(UI.slDuck, 'livechange', function () { updateLabels(UI); });
+            window.localListen(UI.chbDuck, 'click', function () { updateDuckState(UI); });
 
             renderRows(panel, s.dictionary);
 

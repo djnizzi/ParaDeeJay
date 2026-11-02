@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.10
+
+- The ducking switch now also greys out the level slider while it is off, so it
+  is clear that the slider only applies when the switch is on. Nothing about the
+  stored setting changed.
+
 ## 0.1.9
 
 - **The music ducks under the announcement.** While the voice is speaking the
