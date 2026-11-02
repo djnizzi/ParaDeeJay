@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.8
+
+- **Fixed: Import CSV… reported a timeout before the file could be read.** The
+  dialog allowed six seconds and then gave up, but the Windows open box is modal
+  and waits on the user, so any pause at the picker used up the deadline. The
+  clock now starts only when a file has actually been chosen; cancelling still
+  reports "Import cancelled".
+- The voice list reads **Heart**, **Isabella**, **Puck** and **Fable** instead of
+  the model's internal ids (`af_heart`, `bf_isabella`, `am_puck`, `bm_fable`).
+  The descriptions are unchanged, as are the stored settings.
+
 ## 0.1.7
 
 - **Export CSV…** now asks where to put the file, through MediaMonkey's own save

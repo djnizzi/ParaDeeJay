@@ -7,11 +7,12 @@
 
     var SETTINGS_KEY = 'paraDeeJay_settings';
 
+    // The labels are for people; engine.js keeps the model's own voice ids.
     var VOICES = [
-        'af_heart \u2014 American, warm (default)',
-        'bf_isabella \u2014 British, light',
-        'am_puck \u2014 American, brighter',
-        'bm_fable \u2014 British, deeper'
+        'Heart \u2014 American, warm (default)',
+        'Isabella \u2014 British, light',
+        'Puck \u2014 American, brighter',
+        'Fable \u2014 British, deeper'
     ];
 
     var DEFAULTS = {
@@ -195,25 +196,41 @@
         var before = readImport();
         var startRev = before ? Number(before.rev) || 0 : 0;
 
-        note(panel, 'Reading\u2026');
+        note(panel, 'Waiting for a file\u2026');
         if (callInMainWindow('ParaDeeJayImportNames', readRows(panel)) === null) {
             note(panel, 'Import needs the main window, which could not be reached.');
             return;
         }
 
-        var deadline = Date.now() + 6000;
+        // No deadline while the picker is open: it is a modal Windows dialog and
+        // the user may take as long as they like, and cancelling publishes a
+        // result of its own. The clock only starts once the main window reports a
+        // chosen file, so a slow pick can no longer look like a failed read.
+        var readingSince = 0;
         (function poll() {
             var res = readImport();
             if (res && Number(res.rev) > startRev) {
-                if (res.cancelled) { note(panel, 'Import cancelled.'); return; }
-                if (res.error) { note(panel, res.error); return; }
-                renderRows(panel, res.rows || []);
-                note(panel, res.added
-                    ? 'Added ' + res.added + (res.added === 1 ? ' name' : ' names') + ' \u2014 OK to keep them.'
-                    : 'Nothing new: every name in the file is already in the list.');
+                if (res.reading) {
+                    if (!readingSince) readingSince = Date.now();
+                    note(panel, 'Reading\u2026');
+                } else if (res.cancelled) {
+                    note(panel, 'Import cancelled.');
+                    return;
+                } else if (res.error) {
+                    note(panel, res.error);
+                    return;
+                } else {
+                    renderRows(panel, res.rows || []);
+                    note(panel, res.added
+                        ? 'Added ' + res.added + (res.added === 1 ? ' name' : ' names') + ' \u2014 OK to keep them.'
+                        : 'Nothing new: every name in the file is already in the list.');
+                    return;
+                }
+            }
+            if (readingSince && Date.now() - readingSince > 8000) {
+                note(panel, 'Import timed out before the file could be read.');
                 return;
             }
-            if (Date.now() > deadline) { note(panel, 'Import timed out before the file could be read.'); return; }
             setTimeout(poll, 150);
         })();
     }

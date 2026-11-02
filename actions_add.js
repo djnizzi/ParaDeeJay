@@ -527,8 +527,13 @@
     var IMPORT_KEY = 'paraDeeJay_import';
 
     window.ParaDeeJayImportNames = function (currentRows) {
+        // Strictly increasing even if two results land in the same millisecond, so
+        // the dialog cannot miss the file that comes after the "reading" notice.
+        var lastRev = 0;
         function publish(result) {
-            result.rev = Date.now();
+            var now = Date.now();
+            lastRev = now > lastRev ? now : lastRev + 1;
+            result.rev = lastRev;
             try { window.localStorage.setItem(IMPORT_KEY, JSON.stringify(result)); } catch (e) { }
             return result;
         }
@@ -576,6 +581,10 @@
                 publish({ error: 'This MediaMonkey cannot hand a file to an addon.' });
                 return;
             }
+
+            // A file was chosen. The dialog starts its own clock from here, since
+            // the picker itself waits on the user for as long as they need.
+            publish({ reading: true });
 
             var reading;
             try {
