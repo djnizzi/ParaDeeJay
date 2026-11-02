@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.7
+
+- **Export CSV…** now asks where to put the file, through MediaMonkey's own save
+  dialog (`app.utils.dialogSaveFile`), starting in the user folder with
+  `ParaDeeJay names` filled in. Cancelling does nothing instead of writing over
+  last time's file.
+- **Import CSV…** opens the matching file picker (`app.utils.dialogOpenFile`), so
+  the CSV can live anywhere, and cancel is reported as "cancelled" rather than
+  looking like a failed read.
+- If a build of MediaMonkey lacks those two helpers, both buttons fall back to
+  `ParaDeeJay names.csv` in the user folder and say so, rather than failing.
+
 ## 0.1.6
 
 - **Import CSV…** reads `ParaDeeJay names.csv` back from the same folder the

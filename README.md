@@ -139,19 +139,19 @@ boundaries and tries the longest entry first. Empty and half-filled rows are
 dropped on save. The respelling is fed back through the ordinary word lookup, so
 it only works if it is spelled the way you want it said.
 
-**Export CSV…** writes those rows to `ParaDeeJay names.csv` in MediaMonkey's user
-folder, and the message that follows names the full path. The file is UTF-8 with
-a byte-order mark, CRLF line ends and CSV quoting, so Excel shows `RÜFÜS` and
-`Rufus` as two cells with the accents intact. It exports what is on screen, so
-rows you have added but not saved are included. MediaMonkey gives add-ons no
-save-as dialog, which is why the destination is fixed rather than chosen.
+**Export CSV…** opens a save dialog, starting in MediaMonkey's user folder with
+`ParaDeeJay names` filled in, and writes whatever you choose. The file is UTF-8
+with a byte-order mark, CRLF line ends and CSV quoting, so Excel shows `RÜFÜS`
+and `Rufus` as two cells with the accents intact. It exports what is on screen,
+so rows you have added but not saved are included; cancelling does nothing.
 
-**Import CSV…** reads that same file back and adds whatever is not already in the
-list, leaving the rows on screen where they are. Quoted cells, doubled quotes and
-any of CRLF, LF or CR line ends are understood, the header and byte-order mark are
-skipped, and names already present are skipped case-insensitively, so importing
-the same file twice changes nothing. It reports what it did under the buttons, and
-the imported names are only kept once you press OK.
+**Import CSV…** opens a file picker, starting in the same folder, and adds
+whatever is not already in the list, leaving the rows on screen where they are.
+Quoted cells, doubled quotes and any of CRLF, LF or CR line ends are understood,
+the header and byte-order mark are skipped, and names already present are skipped
+case-insensitively, so importing the same file twice changes nothing. It reports
+what it did under the buttons, and the imported names are only kept once you
+press OK.
 
 For a bulk import, the installed table can also be edited directly:
 

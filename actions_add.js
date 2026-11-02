@@ -396,14 +396,59 @@
         speakText('Paradee is a small voice that runs anywhere. This is how track announcements will sound.', s);
     };
 
-    // Export button in the settings dialog. The CSV is built here rather than in
-    // the dialog because dictionary.js is loaded in this window, and the writing
-    // primitive is MediaMonkey's own app.filesystem.saveTextToFileAsync.
-    var EXPORT_FILE = 'ParaDeeJay names.csv';
+    // Export and Import buttons in the settings dialog. Both run in this window
+    // because dictionary.js and app.utils live here; the CSV text and the merged
+    // rows travel back to the dialog through localStorage.
+    var EXPORT_FILE = 'ParaDeeJay names';         // suggested name; the dialog adds .csv
+    var FIXED_NAME = 'ParaDeeJay names.csv';      // used when the host has no dialogs
+    var CSV_FILTER = 'CSV file (*.csv)|*.csv|All files (*.*)|*.*';
 
-    // MediaMonkey has no save-as dialog for addons, so the file goes to the first
-    // folder the host will name: the user folder, then the data folder. The
-    // caller reports the resulting path, so it is never a mystery where it went.
+    // MediaMonkey hands addons no save-as API of its own, but it does hand out the
+    // native dialogs: app.utils.dialogSaveFile and app.utils.dialogOpenFile, the
+    // same two the built-in exporter and the error log use. The save dialog resolves
+    // to a path ('' when cancelled) and the open dialog to a list of picked files,
+    // both through MediaMonkey's own promise. A host without them still works,
+    // through the fixed name in the user folder.
+    function hasSaveDialog() {
+        return !!(app.utils && typeof app.utils.dialogSaveFile === 'function');
+    }
+
+    function hasOpenDialog() {
+        return !!(app.utils && typeof app.utils.dialogOpenFile === 'function');
+    }
+
+    function when(promise, onValue, onError) {
+        if (promise && typeof promise.then === 'function') {
+            promise.then(onValue, function (err) { if (onError) onError(err); });
+        } else {
+            onValue(promise);
+        }
+    }
+
+    function withCsvExtension(file) {
+        var name = String(file == null ? '' : file);
+        if (!name) return '';
+        return /\.[A-Za-z0-9]{1,5}$/.test(name) ? name : name + '.csv';
+    }
+
+    // The pickers may resolve to a StringList, a plain string, or nothing at all.
+    function firstFile(files) {
+        if (!files) return '';
+        if (typeof files === 'string') return files;
+
+        var name = '';
+        try {
+            if (files.count) {
+                if (typeof files.locked === 'function') files.locked(function () { name = files.getValue(0); });
+                else name = files.getValue(0);
+            }
+        } catch (e) {
+            try { name = files.getValue(0); } catch (err) { name = ''; }
+        }
+        return name ? String(name) : '';
+    }
+
+    // Starts in the user folder, then the data folder.
     function exportFolder() {
         var fs = app.filesystem;
         var names = ['getUserFolder', 'getDataFolder'];
@@ -416,6 +461,15 @@
             } catch (e) { /* try the next one */ }
         }
         return '';
+    }
+
+    function fixedFile() {
+        var folder = exportFolder();
+        if (!folder) return '';
+
+        var sep = '/';
+        try { sep = app.filesystem.getPathSeparator() || sep; } catch (e) { }
+        return String(folder).replace(/[\\\/]+$/, '') + sep + FIXED_NAME;
     }
 
     window.ParaDeeJayExportNames = function (rows) {
@@ -434,25 +488,36 @@
             return;
         }
 
-        var folder = exportFolder();
-        if (!folder) {
+        function writeTo(file) {
+            if (!file) return;                     // cancelled in the save dialog
+            var target = withCsvExtension(file);
+
+            try {
+                app.filesystem.saveTextToFileAsync(target, csv).then(function () {
+                    toast('ParaDeeJay: exported ' + count + (count === 1 ? ' name' : ' names') + ' to ' + target);
+                }, function (err) {
+                    toast('ParaDeeJay: could not write ' + target + ' (' + (err && err.message || err) + ')');
+                });
+            } catch (e) {
+                toast('ParaDeeJay: could not write ' + target + ' (' + (e && e.message || e) + ')');
+            }
+        }
+
+        if (hasSaveDialog()) {
+            try {
+                when(app.utils.dialogSaveFile(exportFolder(), 'csv', CSV_FILTER, 'Export names', EXPORT_FILE), writeTo);
+                return;
+            } catch (e) {
+                console.error('ParaDeeJay: save dialog failed, using the user folder instead', e);
+            }
+        }
+
+        var fallback = fixedFile();
+        if (!fallback) {
             toast('ParaDeeJay: could not find a folder to write the CSV to.');
             return;
         }
-
-        var sep = '/';
-        try { sep = app.filesystem.getPathSeparator() || sep; } catch (e) { }
-        var file = folder.replace(/[\\\/]+$/, '') + sep + EXPORT_FILE;
-
-        try {
-            app.filesystem.saveTextToFileAsync(file, csv).then(function () {
-                toast('ParaDeeJay: exported ' + count + (count === 1 ? ' name' : ' names') + ' to ' + file);
-            }, function (err) {
-                toast('ParaDeeJay: could not write ' + file + ' (' + (err && err.message || err) + ')');
-            });
-        } catch (e) {
-            toast('ParaDeeJay: could not write ' + file + ' (' + (e && e.message || e) + ')');
-        }
+        writeTo(fallback);
     };
 
     // Import button. Name rows live in the dialog's DOM, but reading a file needs
@@ -474,29 +539,7 @@
             return publish({ error: 'The pronunciation dictionary module is not loaded.' });
         }
 
-        var folder = exportFolder();
-        if (!folder) {
-            return publish({ error: 'Could not find the folder ParaDeeJay names.csv lives in.' });
-        }
-
-        var sep = '/';
-        try { sep = app.filesystem.getPathSeparator() || sep; } catch (e) { }
-        var file = folder.replace(/[\\\/]+$/, '') + sep + EXPORT_FILE;
-
-        if (typeof app.filesystem.loadTextFromFileAsync !== 'function') {
-            return publish({ error: 'This MediaMonkey cannot hand a file to an addon.' });
-        }
-
-        var reading;
-        try {
-            reading = app.filesystem.loadTextFromFileAsync(file);
-        } catch (e) {
-            toast('ParaDeeJay: could not read ' + file);
-            return publish({ error: 'Could not read ' + file + ' (' + (e && e.message || e) + ')' });
-        }
-
-        var promise = (reading && typeof reading.then === 'function') ? reading : Promise.resolve(reading);
-        promise.then(function (text) {
+        function merge(text) {
             // Existing rows keep their order and win, so importing the same file
             // twice does not duplicate a name, and an edited spelling on screen is
             // not overwritten by the file.
@@ -524,12 +567,49 @@
             }
 
             publish({ rows: rows, added: added });
-        }, function (err) {
-            var detail = (err && err.message || err);
-            toast('ParaDeeJay: could not read ' + file + ' (' + detail + ')');
-            publish({ error: 'Could not read ' + EXPORT_FILE + ': ' + detail });
-        });
+        }
 
+        function readFrom(file) {
+            if (!file) { publish({ cancelled: true }); return; }
+
+            if (typeof app.filesystem.loadTextFromFileAsync !== 'function') {
+                publish({ error: 'This MediaMonkey cannot hand a file to an addon.' });
+                return;
+            }
+
+            var reading;
+            try {
+                reading = app.filesystem.loadTextFromFileAsync(file);
+            } catch (e) {
+                toast('ParaDeeJay: could not read ' + file);
+                publish({ error: 'Could not read ' + file + ' (' + (e && e.message || e) + ')' });
+                return;
+            }
+
+            when(reading, function (text) { merge(text); }, function (err) {
+                var detail = (err && err.message || err);
+                toast('ParaDeeJay: could not read ' + file + ' (' + detail + ')');
+                publish({ error: 'Could not read ' + file + ': ' + detail });
+            });
+        }
+
+        if (hasOpenDialog()) {
+            try {
+                when(app.utils.dialogOpenFile(exportFolder(), 'csv', CSV_FILTER, 'Import names', false),
+                    function (files) { readFrom(firstFile(files)); },
+                    function () { publish({ cancelled: true }); });
+                return true;
+            } catch (e) {
+                console.error('ParaDeeJay: open dialog failed, reading the user folder instead', e);
+            }
+        }
+
+        var fallback = fixedFile();
+        if (!fallback) {
+            publish({ error: 'Could not find the folder ParaDeeJay names.csv lives in.' });
+            return true;
+        }
+        readFrom(fallback);
         return true;
     };
 

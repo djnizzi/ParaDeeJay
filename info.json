@@ -1,7 +1,7 @@
 {
   "title": "ParaDeeJay",
   "id": "paraDeeJay",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "general",
   "description": "Announces the playing track in a local neural voice. Runs Paradee, an 8M-parameter TTS model distilled from Kokoro, entirely inside MediaMonkey. No cloud, no API key, four voices.",
   "author": "NiZDesign",

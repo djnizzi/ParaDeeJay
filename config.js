@@ -205,6 +205,7 @@
         (function poll() {
             var res = readImport();
             if (res && Number(res.rev) > startRev) {
+                if (res.cancelled) { note(panel, 'Import cancelled.'); return; }
                 if (res.error) { note(panel, res.error); return; }
                 renderRows(panel, res.rows || []);
                 note(panel, res.added
