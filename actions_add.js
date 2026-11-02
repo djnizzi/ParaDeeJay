@@ -459,10 +459,18 @@
     hotkeys.addHotkey('Ctrl+Shift+9', 'paraDeeJay_toggle', false);
     hotkeys.addHotkey('Ctrl+Shift+8', 'paraDeeJay_speakCurrent', false);
 
-    // Tools > ParaDeeJay
-    if (window._menuItems && window._menuItems.tools && window._menuItems.tools.action &&
-        Array.isArray(window._menuItems.tools.action.submenu)) {
-        window._menuItems.tools.action.submenu.push({
+    // Play > ParaDeeJay, falling back to Tools. Both menus are plain
+    // {action: {submenu: []}} objects defined in MediaMonkey's actions.js, so the
+    // same push works for either; Play is where a playback switch belongs.
+    var menuTarget = null;
+    ['play', 'tools'].forEach(function (name) {
+        if (menuTarget !== null) return;
+        var item = window._menuItems && window._menuItems[name];
+        if (item && item.action && Array.isArray(item.action.submenu)) menuTarget = item.action.submenu;
+    });
+
+    if (menuTarget) {
+        menuTarget.push({
             action: {
                 title: 'ParaDeeJay',
                 icon: 'para-deejay',

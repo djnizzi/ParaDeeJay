@@ -15,6 +15,9 @@
 - The toolbar button calls `window.ParaDeeJay.toggle()` directly rather than
   going through the action registry, so a missing or renamed action cannot leave
   it inert.
+- The menu is **Play > ParaDeeJay** rather than **Tools > ParaDeeJay**, where a
+  playback switch belongs. It falls back to the Tools menu if MediaMonkey does
+  not expose one.
 - The self-test gained a `Settings (paraDeeJay_settings)` block: the raw stored
   value, the mirror, the settings actually in use, and whether a JSON string
   survives a write/read round-trip.

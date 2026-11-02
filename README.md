@@ -33,7 +33,7 @@ If both are enabled they will both speak, so turn off speech in the one you are 
    picked before closing the dialog.
 
 Hotkeys: `Ctrl+Shift+9` toggles announcements, `Ctrl+Shift+8` announces the current
-track immediately. Both are also in **Tools > ParaDeeJay** and on the toolbar button.
+track immediately. Both are also in **Play > ParaDeeJay** and on the toolbar button.
 
 ## Settings
 
@@ -120,11 +120,11 @@ MediaMonkey's document, not the addon folder. `platform.js` probes, in order:
 
 The first folder that serves a valid `info.json` wins and is remembered. If none
 does, the addon falls back to the system voice (if that setting is on) and
-**Tools > ParaDeeJay > ParaDeeJay self-test** prints exactly what failed and why.
+**Play > ParaDeeJay > ParaDeeJay self-test…** prints exactly what failed and why.
 To repair manually, set `assetBaseOverride` in `persistent.json` under
 `paraDeeJay_settings` to a folder URL ending in `/`.
 
-If a setting looks ignored, run **Tools > ParaDeeJay > ParaDeeJay self-test…** (or
+If a setting looks ignored, run **Play > ParaDeeJay > ParaDeeJay self-test…** (or
 the **Self-test** button in the dialog) and read its
 `Settings (paraDeeJay_settings)` block: `stored` is the raw value MediaMonkey
 returns, `mirror` is the `localStorage` copy, `in use` is what the addon is
