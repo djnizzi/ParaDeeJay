@@ -45,6 +45,22 @@
                 Fall back to the system voice if the local voice fails
             </div>
         </div>
+
+        <div>
+            <div data-id="chbDuck" data-control-class="Checkbox"
+                 data-tip="Pull the playing track down while the announcement speaks, then bring it back, like ducking the music under a talkover.">
+                Turn the music down while announcing
+            </div>
+        </div>
+
+        <div>
+            <label data-add-colon>Music level then</label>
+            <div class="flex row">
+                <div data-id="slDuck" class="fill" data-control-class="Slider"
+                     data-init-params="{min: 0, max: 80, step: 5, value: 25}"></div>
+                <span data-id="lblDuck" style="min-width: 4em; text-align: right;"></span>
+            </div>
+        </div>
     </fieldset>
 
     <fieldset>

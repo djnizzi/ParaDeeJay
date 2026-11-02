@@ -20,6 +20,8 @@
         voice: 0,                 // index into ParaDeeJayEngine.VOICES
         speed: 1.0,               // 0.5 .. 2.0, fed to the model as its `speed` input
         volume: 0.8,              // 0 .. 1
+        duckMusic: true,          // pull the music down while an announcement plays
+        duckTo: 0.25,             // ...to this fraction of the level it was at
         fallbackToSystemTts: true, // speak with the OS voice if the model cannot load
         showToolbarButton: true,
         dictionary: [],           // [{ from, to }] names added in the settings dialog
@@ -108,6 +110,7 @@
         s.voice = Math.min(3, Math.max(0, Number(s.voice) | 0));
         s.speed = clamp(s.speed, 0.5, 2);
         s.volume = clamp(s.volume, 0, 1);
+        s.duckTo = clamp(s.duckTo, 0, 1);
         if (!Array.isArray(s.dictionary)) s.dictionary = [];
         return s;
     }
@@ -174,16 +177,112 @@
 
     var fallbackWarned = false;
 
+    // ------------------------------------------------------------------ ducking
+    //
+    // MediaMonkey's player volume is a plain 0..1 property, written the same way
+    // by its own volume actions and tray menu, so the music can be pulled down
+    // under an announcement and put back afterwards. The level from before the
+    // drop is kept for as long as one is in flight, so an announcement that
+    // replaces another cannot compound the drop (0.25 of 0.25).
+
+    var duck = { active: false, saved: 0, applied: 0, rev: 0 };
+
+    function playerVolume() {
+        try { return Number(app.player.volume); } catch (e) { return NaN; }
+    }
+
+    function setPlayerVolume(value) {
+        try { app.player.volume = value; } catch (e) { /* read-only in the stubs */ }
+        duck.applied = value;
+    }
+
+    function musicIsPlaying() {
+        try {
+            var p = app.player;
+            return !!(p && p.isPlaying && !p.paused);
+        } catch (e) { return false; }
+    }
+
+    // Dropping straight from full to a quarter is audible as a click, so the
+    // change is stepped over ~150 ms. A ramp stops as soon as a newer
+    // announcement takes over the volume.
+    function rampVolume(from, to, steps, ms, rev) {
+        var i = 1;
+        (function step() {
+            if (rev && rev !== duck.rev) return;
+            setPlayerVolume(from + (to - from) * (i / steps));
+            if (i++ >= steps) return;
+            setTimeout(step, Math.max(15, Math.round(ms / steps)));
+        })();
+    }
+
+    // Returns a token for duckRestore, or 0 when the music is left alone.
+    function duckStart(s) {
+        if (!s.duckMusic || !musicIsPlaying()) return 0;
+
+        var level = clamp(s.duckTo, 0, 1);
+        var current = playerVolume();
+        if (!level || !isFinite(current) || current <= 0) return 0;
+
+        if (!duck.active) {
+            duck.saved = current;
+            duck.active = true;
+        }
+
+        var rev = ++duck.rev;
+        rampVolume(current, duck.saved * level, 6, 150, rev);
+        return rev;
+    }
+
+    function duckRestore(rev) {
+        if (!rev || rev !== duck.rev) return;   // a newer announcement owns it
+        if (!duck.active) return;
+        duck.active = false;
+
+        var now = playerVolume();
+        // If the level is no longer the one set here, the volume was moved while
+        // the announcement played: leave the user's choice where they put it.
+        if (!isFinite(now) || Math.abs(now - duck.applied) > 0.03) return;
+
+        rampVolume(now, duck.saved, 10, 400, rev);
+    }
+
     async function speakText(text, s) {
         var e = engine();
         if (!e) return;
+
+        var rev = 0;
+        var watchdog = 0;
+
+        function release() {
+            if (watchdog) { clearTimeout(watchdog); watchdog = 0; }
+            duckRestore(rev);
+        }
+
+        // Called by the engine when the audio actually starts, not when the
+        // request is made, so the music stays up during model load and synthesis.
+        function begin(audioSec) {
+            rev = duckStart(s);
+            if (!rev) return;
+            watchdog = setTimeout(release, Math.round((Number(audioSec) || 6) * 1000) + 2000);
+        }
+
         try {
-            var stats = await e.speak(text, { voice: s.voice, speed: s.speed, volume: s.volume, dictionary: s.dictionary });
+            var stats = await e.speak(text, {
+                voice: s.voice,
+                speed: s.speed,
+                volume: s.volume,
+                dictionary: s.dictionary,
+                onStart: begin,
+                onEnd: release
+            });
             if (stats && stats.inferMs) {
                 // Keep a quiet record of the last utterance for the settings dialog.
                 lastUtterance = stats;
             }
+            if (!stats) release();          // nothing was played, so nothing to wait for
         } catch (err) {
+            release();
             console.error('ParaDeeJay: synthesis failed', err);
             if (s.fallbackToSystemTts) {
                 if (!fallbackWarned) {
@@ -264,6 +363,7 @@
             s.voice = Math.min(3, Math.max(0, Number(s.voice) | 0));
             s.speed = clamp(s.speed, 0.5, 2);
             s.volume = clamp(s.volume, 0, 1);
+            s.duckTo = clamp(s.duckTo, 0, 1);
         }
         saveSettings(s);
         if (!s.enabled && engine()) engine().stop();

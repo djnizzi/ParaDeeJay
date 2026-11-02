@@ -21,6 +21,8 @@
         speed: 1.0,
         volume: 0.8,
         fallbackToSystemTts: true,
+        duckMusic: true,
+        duckTo: 0.25,
         showToolbarButton: true,
         dictionary: [],
         assetBaseOverride: ''
@@ -93,6 +95,7 @@
         s.voice = clamp(s.voice, 0, VOICES.length - 1) | 0;
         s.speed = clamp(s.speed, 0.5, 2);
         s.volume = clamp(s.volume, 0, 1);
+        s.duckTo = clamp(s.duckTo, 0, 1);
         if (!Array.isArray(s.dictionary)) s.dictionary = [];
         return s;
     }
@@ -247,6 +250,8 @@
             voice: clamp(UI.cbVoice.controlClass.focusedIndex, 0, VOICES.length - 1) | 0,
             speed: clamp(UI.slSpeed.controlClass.value / 100, 0.5, 2),
             volume: clamp(UI.slVolume.controlClass.value / 100, 0, 1),
+            duckMusic: !!UI.chbDuck.controlClass.checked,
+            duckTo: clamp(UI.slDuck.controlClass.value / 100, 0, 1),
             dictionary: readRows(panel)
         };
     }
@@ -254,6 +259,9 @@
     function updateLabels(UI) {
         UI.lblSpeed.textContent = (Math.round(UI.slSpeed.controlClass.value) / 100).toFixed(2) + 'x';
         UI.lblVolume.textContent = Math.round(UI.slVolume.controlClass.value) + '%';
+        if (UI.lblDuck && UI.slDuck) {
+            UI.lblDuck.textContent = Math.round(UI.slDuck.controlClass.value) + '%';
+        }
     }
 
     // MediaMonkey windows are reached through getValue() in the samples, but
@@ -312,6 +320,8 @@
             UI.chbEnabled.controlClass.checked = !!s.enabled;
             UI.chbShowToolbar.controlClass.checked = !!s.showToolbarButton;
             UI.chbFallback.controlClass.checked = !!s.fallbackToSystemTts;
+            UI.chbDuck.controlClass.checked = s.duckMusic !== false;
+            UI.slDuck.controlClass.value = Math.round(clamp(s.duckTo, 0, 1) * 100);
 
             var ds = newStringList(true);
             for (var i = 0; i < VOICES.length; i++) ds.add(VOICES[i]);
@@ -324,6 +334,7 @@
 
             window.localListen(UI.slSpeed, 'livechange', function () { updateLabels(UI); });
             window.localListen(UI.slVolume, 'livechange', function () { updateLabels(UI); });
+            window.localListen(UI.slDuck, 'livechange', function () { updateLabels(UI); });
 
             renderRows(panel, s.dictionary);
 

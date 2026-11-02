@@ -19,6 +19,7 @@ text-to-speech model distilled from Kokoro-82M, inside MediaMonkey's own Chromiu
 - 8.5 MB int8 ONNX model, four voices (`af_heart`, `bf_isabella`, `am_puck`, `bm_fable`)
 - ~12x faster than real time on one wasm thread, so a track title is spoken about
   200 ms after playback starts
+- The music ducks under the announcement and returns when the voice stops
 - Nothing leaves the machine, and no network access is needed after install
 
 This addon is separate from **Track Announcer** and can be installed alongside it.

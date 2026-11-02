@@ -167,7 +167,7 @@
         }
     }
 
-    function play(wav, volume) {
+    function play(wav, volume, onStart, onEnd) {
         stop();
         var ctx = audioContext();
         var buffer = ctx.createBuffer(1, wav.length, SAMPLE_RATE);
@@ -182,8 +182,21 @@
         source.buffer = buffer;
         source.connect(gain);
         gain.connect(ctx.destination);
+
+        // The addon ducks the music under an announcement, so it needs to know
+        // when this source becomes audible and when it has finished. `ended`
+        // also fires when stop() cuts it short, so an interrupted announcement
+        // still hands the volume back.
+        source.onended = function () {
+            if (STATE.source === source) STATE.source = null;
+            if (typeof onEnd === 'function') { try { onEnd(); } catch (e) { } }
+        };
+
         source.start();
         STATE.source = source;
+        if (typeof onStart === 'function') {
+            try { onStart(buffer.duration); } catch (e) { }
+        }
     }
 
     // text -> phonemes -> ids -> waveform, without playing it.
@@ -243,7 +256,7 @@
         var result = await synthesize(text, opts);
         if (!result) return null;
 
-        play(result.wav, opts && opts.volume);
+        play(result.wav, opts && opts.volume, opts && opts.onStart, opts && opts.onEnd);
         delete result.wav;
 
         STATE.last = result;

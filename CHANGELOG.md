@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.9
+
+- **The music ducks under the announcement.** While the voice is speaking the
+  playing track is turned down — to 25% by default — and brought back when it
+  stops. The amount is a slider in the addon settings, and the whole thing has a
+  switch for people who would rather leave the level alone.
+- The drop begins when the audio actually starts, not when the announcement is
+  requested, so model loading and synthesis (about 200 ms, more on the first
+  track) do not leave the music quiet, and it is ramped over roughly 150 ms so
+  there is no click.
+- It only touches the volume while something is playing, an announcement that
+  replaces another keeps the original level instead of quartering it twice, the
+  level is left alone if the volume was moved by hand during the announcement,
+  and a watchdog puts the music back even if the audio never reports finishing.
+
 ## 0.1.8
 
 - **Fixed: Import CSV… reported a timeout before the file could be read.** The
