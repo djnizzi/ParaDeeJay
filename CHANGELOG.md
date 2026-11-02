@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.3
+
+- **Fixed: names with accented letters were spelled out letter by letter.**
+  "RÜFÜS" came out as "ar ef es": the tokenizer only accepts ASCII words, so the
+  `Ü` was dropped and the leftover `R`, `F` and `S` were each read on their own.
+  The new `dictionary.js` runs before tokenisation and folds accents, ligatures
+  and typographic punctuation to ASCII — Unicode NFKD for the accented Latin
+  letters, plus a table for the ones NFKD cannot decompose (`ß`, `ø`, `æ`, `œ`,
+  `ł`, `đ`, `ð`, `þ`, `ı`, `ħ`, `ŋ`). `&`, `@`, `+`, `#`, `%`, `=` and `$` are
+  read as words now instead of vanishing.
+- Names that folding alone does not fix are respelled from a small `PHRASES`
+  table (`RÜFÜS DU SOL` -> "Rufus doo sol", `Sigur Rós`, `Motley Crüe`,
+  `Björk`, `Beyoncé`, `A$AP`, `Motörhead`). Adding an entry there fixes any other
+  artist without touching the code or the lexicon.
+
 ## 0.1.2
 
 - **Fixed: the addon could not be turned off, and the voice, speed and volume

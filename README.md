@@ -92,6 +92,7 @@ The pieces, all vendored so the addon works offline:
 | `vendor/paradee_int8.onnx` | 8.5 MB | the model |
 | `vendor/ort.min.js` + `vendor/ort-wasm-simd.wasm` | 0.5 + 10.5 MB | onnxruntime-web 1.17.3 (classic build, no ESM) |
 | `vendor/lexicon.tsv.gz` | 0.8 MB | 124,926 CMUdict words mapped to misaki IPA |
+| `dictionary.js` | tiny | accent folding, symbol words, name respellings |
 | `g2p.js` | small | text normalisation, IPA, token ids |
 | `engine.js` | small | lazy load, inference, playback |
 
@@ -101,6 +102,27 @@ mumbles badly, so `tools/build-lexicon.js` converts ARPAbet to misaki's IPA and
 `g2p.js` normalises numbers, codes (`M83 -> "em eighty three"`), acronyms and
 `feat.`/`&`/`vs.` before lookup. Words missing from the lexicon go through a small
 letter-to-sound fallback.
+
+**Names and accents.** `dictionary.js` runs before tokenisation and folds accented
+letters, ligatures and typographic punctuation to ASCII, so `RÜFÜS` reaches the
+lexicon as `RUFUS`, `Motörhead` as `Motorhead` and `Björk` as `Bjork`. That step is
+what fixes names being spelled out: the tokenizer only accepts ASCII words, so an
+`Ü` used to be dropped and the leftover `R`, `F` and `S` were each read on their
+own — "ar ef es". The same table turns `&`, `@`, `+`, `#`, `%` and `$` into words
+instead of silence.
+
+Names that survive folding but are still mispronounced are respelled by a plain
+`PHRASES` table in `dictionary.js`:
+
+```js
+['rufus du sol', 'rufus doo sol'],
+['motorhead', 'motor head'],
+['beyonce', 'bee yon say'],
+```
+
+Add an entry for any artist the voice gets wrong; nothing has to be rebuilt and
+the lexicon is untouched — the respelling is just fed back through the ordinary
+word lookup.
 
 Nothing loads at startup: the first announcement resolves paths, fetches the
 runtime and builds the session (~1.5 s), then the session stays warm. `init.js`

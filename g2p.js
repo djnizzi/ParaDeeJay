@@ -203,7 +203,12 @@
     function phonemize(text, lex) {
         if (!text) return '';
 
-        var cleaned = String(text)
+        // dictionary.js folds accents, ligatures and typographic punctuation to
+        // ASCII and respells names the rules would mangle, before anything is
+        // tokenised. Without it "RÜFÜS" splits at the Ü and every fragment is
+        // read as a single letter, which is what came out as "R F S".
+        var dict = global.ParaDeeJayDictionary;
+        var cleaned = (dict && dict.prepare ? dict.prepare(text) : String(text))
             .replace(/\u00a0/g, ' ')
             .replace(/\s*&\s*/g, ' and ')
             .replace(/\b(?:feat|ft)\.?(?=\s|$)/gi, 'featuring')

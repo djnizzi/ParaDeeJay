@@ -42,6 +42,7 @@ const entries = [
   'config.html',
   'icon.png',
   'platform.js',
+  'dictionary.js',
   'g2p.js',
   'engine.js',
   'README.md',

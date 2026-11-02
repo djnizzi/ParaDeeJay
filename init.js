@@ -13,7 +13,7 @@ requirejs('actions');
 (function () {
     'use strict';
 
-    var MODULES = ['platform', 'g2p', 'engine'];
+    var MODULES = ['dictionary', 'platform', 'g2p', 'engine'];
 
     function wait(fn, ms) {
         return (window.requestTimeout || window.setTimeout)(fn, ms);
