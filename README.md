@@ -120,9 +120,19 @@ Names that survive folding but are still mispronounced are respelled by a plain
 ['beyonce', 'bee yon say'],
 ```
 
-Add an entry for any artist the voice gets wrong; nothing has to be rebuilt and
-the lexicon is untouched — the respelling is just fed back through the ordinary
-word lookup.
+Add an entry for any artist the voice gets wrong. It is plain data, and the
+lexicon is untouched: the respelling is fed back through the ordinary word
+lookup, so it only works if it is spelled the way you want it said.
+
+The table ships inside the package, so the copy to edit is the installed one:
+
+```
+%APPDATA%\MediaMonkey5\scripts\paraDeeJay\dictionary.js
+```
+
+Restart MediaMonkey and the next announcement uses it — no rebuild, no lexicon
+regeneration. Editing the copy in this repository instead means running
+`node build.js` and reinstalling the `.mmip`.
 
 Nothing loads at startup: the first announcement resolves paths, fetches the
 runtime and builds the session (~1.5 s), then the session stays warm. `init.js`
