@@ -35,6 +35,21 @@ If both are enabled they will both speak, so turn off speech in the one you are 
 Hotkeys: `Ctrl+Shift+9` toggles announcements, `Ctrl+Shift+8` announces the current
 track immediately. Both are also in **Tools > ParaDeeJay** and on the toolbar button.
 
+## Settings
+
+The toolbar button and `Ctrl+Shift+9` switch announcements on and off; the toast
+that follows (`ParaDeeJay: ON` / `OFF`) confirms the new state, and the addon stays
+silent while it is off, including after a MediaMonkey restart. Voice, speed and
+volume apply to the next announcement, so press **Test voice** to hear them without
+waiting for a track change.
+
+Settings live in MediaMonkey's `persistent.json` under `paraDeeJay_settings`. They
+are written as a JSON string, because the host does not hand a stored object back
+unchanged, and mirrored into `localStorage` with a revision counter so the main
+window and the settings dialog cannot read a stale copy. Pressing OK in the dialog
+merges into what is already stored rather than replacing it, so a hand-written
+`assetBaseOverride` survives a save.
+
 ## Build
 
 ```sh
@@ -107,6 +122,14 @@ does, the addon falls back to the system voice (if that setting is on) and
 **Tools > ParaDeeJay > ParaDeeJay self-test** prints exactly what failed and why.
 To repair manually, set `assetBaseOverride` in `persistent.json` under
 `paraDeeJay_settings` to a folder URL ending in `/`.
+
+If a setting looks ignored, run **Tools > ParaDeeJay > ParaDeeJay self-test…** (or
+the **Self-test** button in the dialog) and read its
+`Settings (paraDeeJay_settings)` block: `stored` is the raw value MediaMonkey
+returns, `mirror` is the `localStorage` copy, `in use` is what the addon is
+actually working from, and `string round-trip` says whether a write survives a
+read. `in use` disagreeing with the dialog points at the settings store; agreeing
+with it but not changing the voice points at the engine instead.
 
 ## Licences
 
