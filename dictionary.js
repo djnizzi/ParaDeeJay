@@ -170,9 +170,54 @@
         return '\uFEFF' + rows.join('\r\n') + '\r\n';
     }
 
+    // The other direction, for the Import button. This is a real RFC 4180 reader
+    // rather than a split(','), because a name legitimately contains a comma
+    // (AC,DC): quoted cells are honoured, "" is a literal quote, and CRLF, LF and
+    // CR alone all end a row. The BOM that toCsv writes is stripped, the header
+    // row is skipped when present, and half-filled rows are dropped, so importing
+    // a file and exporting it again produces the same list.
+    function parseCsv(text) {
+        var s = String(text == null ? '' : text).replace(/^\uFEFF/, '');
+        var rows = [], row = [], field = '', quoted = false;
+
+        for (var i = 0; i < s.length; i++) {
+            var ch = s.charAt(i);
+            if (quoted) {
+                if (ch === '"') {
+                    if (s.charAt(i + 1) === '"') { field += '"'; i++; }
+                    else quoted = false;
+                } else {
+                    field += ch;
+                }
+            } else if (ch === '"') {
+                quoted = true;
+            } else if (ch === ',') {
+                row.push(field); field = '';
+            } else if (ch === '\r' || ch === '\n') {
+                if (ch === '\r' && s.charAt(i + 1) === '\n') i++;
+                row.push(field); field = '';
+                rows.push(row); row = [];
+            } else {
+                field += ch;
+            }
+        }
+        if (field || row.length) { row.push(field); rows.push(row); }
+
+        var out = [];
+        for (var r = 0; r < rows.length && out.length < MAX_ENTRIES; r++) {
+            var from = String(rows[r][0] == null ? '' : rows[r][0]).replace(/\s+/g, ' ').trim();
+            var to = String(rows[r][1] == null ? '' : rows[r][1]).replace(/\s+/g, ' ').trim();
+            if (r === 0 && /^(as written|written|from)$/i.test(from)) continue;
+            if (!from || !to) continue;
+            out.push({ from: from, to: to });
+        }
+        return out;
+    }
+
     global.ParaDeeJayDictionary = {
         fold: fold,
         toCsv: toCsv,
+        parseCsv: parseCsv,
         prepare: prepare,
         setUser: setUser,
         userCount: function () { return user.length; },

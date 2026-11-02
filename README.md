@@ -146,6 +146,13 @@ a byte-order mark, CRLF line ends and CSV quoting, so Excel shows `RÜFÜS` and
 rows you have added but not saved are included. MediaMonkey gives add-ons no
 save-as dialog, which is why the destination is fixed rather than chosen.
 
+**Import CSV…** reads that same file back and adds whatever is not already in the
+list, leaving the rows on screen where they are. Quoted cells, doubled quotes and
+any of CRLF, LF or CR line ends are understood, the header and byte-order mark are
+skipped, and names already present are skipped case-insensitively, so importing
+the same file twice changes nothing. It reports what it did under the buttons, and
+the imported names are only kept once you press OK.
+
 For a bulk import, the installed table can also be edited directly:
 
 ```

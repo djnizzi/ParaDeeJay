@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.6
+
+- **Import CSV…** reads `ParaDeeJay names.csv` back from the same folder the
+  export writes to, and adds the names that are not already in the list. Rows
+  already on screen keep their order and win, so importing the same file twice
+  changes nothing and a spelling edited in the dialog is not overwritten.
+- The reader is a real CSV parser rather than a split on commas: quoted cells,
+  doubled quotes and CRLF/LF/CR line ends are handled, the byte-order mark and
+  the header row are skipped, and empty or half-filled rows are dropped, so
+  exporting and re-importing reproduces the same list.
+- Results are reported under the buttons rather than in a dialog, and the import
+  has to be confirmed with OK like any other change.
+
 ## 0.1.5
 
 - **Export CSV…** beside **Add name** in the settings dialog writes the Names

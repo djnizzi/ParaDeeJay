@@ -172,6 +172,51 @@
         return out;
     }
 
+    // The import runs in the main window (it owns app.filesystem and the CSV
+    // parser) and hands the merged list back through localStorage, the channel the
+    // two windows already share for the settings mirror. Polling is used rather
+    // than a storage event because these are separate host windows.
+    var IMPORT_KEY = 'paraDeeJay_import';
+
+    function note(panel, text) {
+        var el = null;
+        try { el = panel.querySelector('#pdjDictNote'); } catch (e) { }
+        if (el) el.textContent = text;
+    }
+
+    function readImport() {
+        try {
+            var raw = window.localStorage ? window.localStorage.getItem(IMPORT_KEY) : null;
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+    }
+
+    function importNames(panel) {
+        var before = readImport();
+        var startRev = before ? Number(before.rev) || 0 : 0;
+
+        note(panel, 'Reading\u2026');
+        if (callInMainWindow('ParaDeeJayImportNames', readRows(panel)) === null) {
+            note(panel, 'Import needs the main window, which could not be reached.');
+            return;
+        }
+
+        var deadline = Date.now() + 6000;
+        (function poll() {
+            var res = readImport();
+            if (res && Number(res.rev) > startRev) {
+                if (res.error) { note(panel, res.error); return; }
+                renderRows(panel, res.rows || []);
+                note(panel, res.added
+                    ? 'Added ' + res.added + (res.added === 1 ? ' name' : ' names') + ' \u2014 OK to keep them.'
+                    : 'Nothing new: every name in the file is already in the list.');
+                return;
+            }
+            if (Date.now() > deadline) { note(panel, 'Import timed out before the file could be read.'); return; }
+            setTimeout(poll, 150);
+        })();
+    }
+
     function mainWindow() {
         try { return app.dialogs.getMainWindow(); } catch (e) { return null; }
     }
@@ -276,6 +321,10 @@
             // the rows are taken from the panel so unsaved edits are included.
             window.localListen(UI.btnExportNames, 'click', function () {
                 callInMainWindow('ParaDeeJayExportNames', readRows(panel));
+            });
+
+            window.localListen(UI.btnImportNames, 'click', function () {
+                importNames(panel);
             });
 
             window.localListen(UI.btnTest, 'click', function () {

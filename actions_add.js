@@ -455,6 +455,84 @@
         }
     };
 
+    // Import button. Name rows live in the dialog's DOM, but reading a file needs
+    // this window's app.filesystem and parsing needs dictionary.js, so the result
+    // comes back through localStorage, the channel the two windows already share
+    // for the settings mirror. The dialog polls it and re-renders the merged list.
+    var IMPORT_KEY = 'paraDeeJay_import';
+
+    window.ParaDeeJayImportNames = function (currentRows) {
+        function publish(result) {
+            result.rev = Date.now();
+            try { window.localStorage.setItem(IMPORT_KEY, JSON.stringify(result)); } catch (e) { }
+            return result;
+        }
+
+        var dict = window.ParaDeeJayDictionary;
+        if (!dict || typeof dict.parseCsv !== 'function') {
+            toast('ParaDeeJay: the dictionary module is not loaded.');
+            return publish({ error: 'The pronunciation dictionary module is not loaded.' });
+        }
+
+        var folder = exportFolder();
+        if (!folder) {
+            return publish({ error: 'Could not find the folder ParaDeeJay names.csv lives in.' });
+        }
+
+        var sep = '/';
+        try { sep = app.filesystem.getPathSeparator() || sep; } catch (e) { }
+        var file = folder.replace(/[\\\/]+$/, '') + sep + EXPORT_FILE;
+
+        if (typeof app.filesystem.loadTextFromFileAsync !== 'function') {
+            return publish({ error: 'This MediaMonkey cannot hand a file to an addon.' });
+        }
+
+        var reading;
+        try {
+            reading = app.filesystem.loadTextFromFileAsync(file);
+        } catch (e) {
+            toast('ParaDeeJay: could not read ' + file);
+            return publish({ error: 'Could not read ' + file + ' (' + (e && e.message || e) + ')' });
+        }
+
+        var promise = (reading && typeof reading.then === 'function') ? reading : Promise.resolve(reading);
+        promise.then(function (text) {
+            // Existing rows keep their order and win, so importing the same file
+            // twice does not duplicate a name, and an edited spelling on screen is
+            // not overwritten by the file.
+            var rows = [];
+            var seen = {};
+
+            function add(from, to) {
+                var key = dict.fold(from).toLowerCase().replace(/\s+/g, ' ').trim();
+                if (!key || !to || seen[key]) return false;
+                seen[key] = true;
+                rows.push({ from: from, to: to });
+                return true;
+            }
+
+            var current = Array.isArray(currentRows) ? currentRows : readSettings().dictionary;
+            for (var i = 0; i < current.length; i++) {
+                var item = current[i] || {};
+                add(String(item.from == null ? '' : item.from), String(item.to == null ? '' : item.to));
+            }
+
+            var incoming = dict.parseCsv(text);
+            var added = 0;
+            for (var j = 0; j < incoming.length; j++) {
+                if (add(incoming[j].from, incoming[j].to)) added++;
+            }
+
+            publish({ rows: rows, added: added });
+        }, function (err) {
+            var detail = (err && err.message || err);
+            toast('ParaDeeJay: could not read ' + file + ' (' + detail + ')');
+            publish({ error: 'Could not read ' + EXPORT_FILE + ': ' + detail });
+        });
+
+        return true;
+    };
+
     window.ParaDeeJayLastUtterance = function () { return lastUtterance; };
     window.ParaDeeJayStatus = function () { return statusText(); };
 
