@@ -47,9 +47,56 @@
         }
     }
 
+    // ------------------------------------------------------------- persistence
+    //
+    // Nothing in MediaMonkey's documentation says whether app.setValue can store
+    // an object or only a string, and a value that comes back as a string (or as
+    // "[object Object]") makes every read look like a first run: the addon then
+    // ignores every setting, including the on/off switch, because it keeps
+    // starting from DEFAULTS. So settings are written as a JSON string, read back
+    // tolerantly (string or object), and mirrored into localStorage, which the
+    // main window and the config dialog share. `rev` decides which copy is newer.
+
+    function parseStored(raw) {
+        if (raw === null || raw === undefined || raw === '') return null;
+        if (typeof raw === 'object') return raw;
+        if (typeof raw === 'string') {
+            var text = raw.replace(/^\uFEFF/, '').trim();
+            if (text.charAt(0) === '{') {
+                try {
+                    var parsed = JSON.parse(text);
+                    if (parsed && typeof parsed === 'object') return parsed;
+                } catch (e) { /* not JSON, treat as absent */ }
+            }
+        }
+        return null;
+    }
+
+    function readStored() {
+        try { return parseStored(app.getValue(SETTINGS_KEY, null)); } catch (e) { return null; }
+    }
+
+    function readMirror() {
+        try {
+            return parseStored(window.localStorage ? window.localStorage.getItem(SETTINGS_KEY) : null);
+        } catch (e) { return null; }
+    }
+
+    function readBoth() {
+        var stored = readStored();
+        var mirror = readMirror();
+        if (!stored) return mirror;
+        if (!mirror) return stored;
+        return (Number(mirror.rev) || 0) > (Number(stored.rev) || 0) ? mirror : stored;
+    }
+
+    function writeMirror(s) {
+        try { if (window.localStorage) window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) { }
+    }
+
     function readSettings() {
-        var s = app.getValue(SETTINGS_KEY, null);
-        if (!s || typeof s !== 'object') s = clone(DEFAULTS);
+        var s = readBoth();
+        if (!s) s = clone(DEFAULTS);
 
         for (var k in DEFAULTS) {
             if (Object.prototype.hasOwnProperty.call(DEFAULTS, k) && s[k] === undefined) {
@@ -64,8 +111,26 @@
     }
 
     function saveSettings(s) {
-        app.setValue(SETTINGS_KEY, s);
-        if (app.flushState) app.flushState();
+        s.rev = (Number(s.rev) || 0) + 1;
+        writeMirror(s);
+
+        try {
+            app.setValue(SETTINGS_KEY, JSON.stringify(s));
+            if (app.flushState) app.flushState();
+        } catch (e) {
+            console.error('ParaDeeJay: could not persist settings', e);
+        }
+
+        // Confirm the host kept it. If the value came back unreadable, store the
+        // object form as a second attempt; the mirror covers it either way.
+        var back = readStored();
+        if (!back || Number(back.rev) !== s.rev) {
+            try {
+                app.setValue(SETTINGS_KEY, s);
+                if (app.flushState) app.flushState();
+            } catch (e) { }
+        }
+        return s;
     }
 
     function engine() {
@@ -273,6 +338,24 @@
         try {
             if (window.ParaDeeJayPlatform) lines.push(await window.ParaDeeJayPlatform.diagnostics());
             else lines.push('platform module is not loaded');
+
+            try {
+                lines.push('');
+                lines.push('Settings (' + SETTINGS_KEY + '):');
+                var raw = app.getValue(SETTINGS_KEY, null);
+                lines.push('  stored: ' + (raw === null || raw === undefined ? 'empty' : typeof raw) +
+                    ' ' + JSON.stringify(parseStored(raw)));
+                lines.push('  mirror: ' + JSON.stringify(readMirror()));
+                lines.push('  in use: ' + JSON.stringify(readSettings()));
+
+                var probeKey = SETTINGS_KEY + '_probe';
+                app.setValue(probeKey, JSON.stringify({ rev: 1, ok: true }));
+                var round = parseStored(app.getValue(probeKey, null));
+                lines.push('  string round-trip: ' + (round && round.ok === true ? 'ok' : 'FAILED'));
+                if (app.deleteValue) { try { app.deleteValue(probeKey); } catch (e3) { } }
+            } catch (probeErr) {
+                lines.push('  settings probe failed: ' + (probeErr && probeErr.message || probeErr));
+            }
 
             var e = engine();
             if (e) {

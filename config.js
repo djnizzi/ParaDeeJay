@@ -38,9 +38,49 @@
         return Math.min(max, Math.max(min, value));
     }
 
+    // The settings are stored as a JSON string and mirrored into localStorage;
+    // see the persistence notes in actions_add.js. Reading both forms keeps the
+    // dialog in step with the main window whichever one the host keeps.
+    function parseStored(raw) {
+        if (raw === null || raw === undefined || raw === '') return null;
+        if (typeof raw === 'object') return raw;
+        if (typeof raw === 'string') {
+            var text = raw.replace(/^\uFEFF/, '').trim();
+            if (text.charAt(0) === '{') {
+                try {
+                    var parsed = JSON.parse(text);
+                    if (parsed && typeof parsed === 'object') return parsed;
+                } catch (e) { }
+            }
+        }
+        return null;
+    }
+
+    function readStored() {
+        try { return parseStored(app.getValue(SETTINGS_KEY, null)); } catch (e) { return null; }
+    }
+
+    function readMirror() {
+        try {
+            return parseStored(window.localStorage ? window.localStorage.getItem(SETTINGS_KEY) : null);
+        } catch (e) { return null; }
+    }
+
+    function readBoth() {
+        var stored = readStored();
+        var mirror = readMirror();
+        if (!stored) return mirror;
+        if (!mirror) return stored;
+        return (Number(mirror.rev) || 0) > (Number(stored.rev) || 0) ? mirror : stored;
+    }
+
+    function writeMirror(s) {
+        try { if (window.localStorage) window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (e) { }
+    }
+
     function readSettings() {
-        var s = app.getValue(SETTINGS_KEY, null);
-        if (!s || typeof s !== 'object') s = clone(DEFAULTS);
+        var s = readBoth();
+        if (!s) s = clone(DEFAULTS);
 
         for (var k in DEFAULTS) {
             if (Object.prototype.hasOwnProperty.call(DEFAULTS, k) && s[k] === undefined) {
@@ -74,11 +114,20 @@
         UI.lblVolume.textContent = Math.round(UI.slVolume.controlClass.value) + '%';
     }
 
+    // MediaMonkey windows are reached through getValue() in the samples, but
+    // that is really its settings lookup; try the plain property too so the
+    // hand-off survives either way.
     function callInMainWindow(name, arg) {
         var win = mainWindow();
         if (!win) return null;
-        var fn = win.getValue(name);
+
+        var fn = null;
+        try { fn = win.getValue(name); } catch (e) { }
+        if (typeof fn !== 'function') {
+            try { fn = win[name]; } catch (e) { }
+        }
         if (typeof fn !== 'function') return null;
+
         try { return fn(arg); } catch (e) { console.error('ParaDeeJay: ' + name + ' failed', e); return null; }
     }
 
@@ -151,10 +200,25 @@
 
         save: function (panel, addon) {
             var UI = getAllUIElements(panel);
-            var settings = collect(UI);
+            // Merge into what is already stored instead of replacing it, so keys
+            // the dialog does not show (assetBaseOverride) survive a save.
+            var previous = readBoth() || {};
+            var settings = clone(previous);
+            var collected = collect(UI);
+            for (var k in collected) {
+                if (Object.prototype.hasOwnProperty.call(collected, k) && collected[k] !== undefined) {
+                    settings[k] = collected[k];
+                }
+            }
+            settings.rev = (Number(previous.rev) || 0) + 1;
 
-            app.setValue(SETTINGS_KEY, settings);
-            if (app.flushState) app.flushState();
+            writeMirror(settings);
+            try {
+                app.setValue(SETTINGS_KEY, JSON.stringify(settings));
+                if (app.flushState) app.flushState();
+            } catch (e) {
+                console.error('ParaDeeJay: could not persist settings from the dialog', e);
+            }
 
             callInMainWindow('ParaDeeJayApplySettings', settings);
         }

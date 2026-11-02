@@ -162,8 +162,10 @@ requirejs('actions');
         }
 
         if (!toolbarIcon) {
+            // Call the runtime directly rather than going through the action,
+            // so the button works even if the action registry is unavailable.
             toolbarIcon = window.uitools.addToolButton('righttoolbuttons', 'para-deejay', function () {
-                actions.paraDeeJay_toggle.execute();
+                window.ParaDeeJay.toggle();
             }, window.ParaDeeJay.statusText());
 
             toolbarIcon.controlClass.contextMenu = new Menu([

@@ -27,6 +27,22 @@
         try { app.setValue(key, value); } catch (e) { /* config dialog windows */ }
     }
 
+    // Settings are written as a JSON string (see actions_add.js); accept the
+    // object form too, for a host that hands it back untouched.
+    function decodeSettings(value) {
+        if (value && typeof value === 'object') return value;
+        if (typeof value === 'string') {
+            var text = value.replace(/^\uFEFF/, '').trim();
+            if (text.charAt(0) === '{') {
+                try {
+                    var parsed = JSON.parse(text);
+                    if (parsed && typeof parsed === 'object') return parsed;
+                } catch (e) { }
+            }
+        }
+        return {};
+    }
+
     // "C:\...\scripts\paraDeeJay" -> "file:///C:/.../scripts/paraDeeJay/"
     function fileUrl(path) {
         if (!path) return null;
@@ -38,7 +54,7 @@
 
     function candidates() {
         var out = [];
-        var settings = get(SETTINGS_KEY, {}) || {};
+        var settings = decodeSettings(get(SETTINGS_KEY, null));
         if (settings.assetBaseOverride) out.push(settings.assetBaseOverride);
 
         var stored = get(BASE_KEY, null);
